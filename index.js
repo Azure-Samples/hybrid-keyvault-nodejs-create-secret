@@ -1,4 +1,5 @@
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+// uncomment to ignore 'UNABLE_TO_GET_ISSUER_CERT_LOCALLY' error
+// process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'; 
 
 var Environment = require("@azure/ms-rest-azure-env");
 var msRestNodeAuth = require('@azure/ms-rest-nodeauth');
@@ -10,37 +11,53 @@ const request = require('request');
 const requestPromise = util.promisify(request);
 
 // update these
-var clientId = "";
-var clientObjectId = "";
-var clientSecret = "";
-var tenantId = ""; //"adfs"
-var subscriptionId = "";
-var armEndpoint = "";
-var location = ""
-var resourceGroup = "azs-sample-rg"
-var keyVaultName = "azs-sample-kv"
+validateEnvironmentVariables();
+var clientAppId = process.env['CLIENT_APP_ID'];
+var clientObjectId = process.env['CLIENT_OBJECT_ID'];
+var clientSecret = process.env['CLIENT_SECRET'];
+var tenantId = process.env['TENANT_ID'];
+var subscriptionId = process.env['SUBSCRIPTION_ID'];
+var armEndpoint = process.env['ARM_ENDPOINT'];
+var location = process.env['LOCATION'];
+var domain = tenantId;
+var resourceGroup = "azs-sample-rg";
+var keyVaultName = "azs-sample-kv";
 var secretName = "azs-app-created-secret";
 var secretValue = "azs-app-created-password";
 
+function validateEnvironmentVariables() {
+    var envs = [];
+    if (!process.env['CLIENT_APP_ID']) envs.push('CLIENT_APP_ID');
+    if (!process.env['CLIENT_OBJECT_ID']) envs.push('CLIENT_OBJECT_ID');
+    if (!process.env['CLIENT_SECRET']) envs.push('CLIENT_SECRET');
+    if (!process.env['TENANT_ID']) envs.push('TENANT_ID');
+    if (!process.env['SUBSCRIPTION_ID']) envs.push('SUBSCRIPTION_ID');
+    if (!process.env['ARM_ENDPOINT']) envs.push('ARM_ENDPOINT');
+    if (!process.env['LOCATION']) envs.push('LOCATION');
+    if (envs.length > 0) {
+        throw new Error(util.format('please set/export the following environment variables: %s', envs.toString()));
+    }
+}
+
 function fetchEndpointMetadata() {
-  // Setting URL and headers for request
-  console.log("Fetching environment endpoints");
-  var options = {
-    "url": armEndpoint + 'metadata/endpoints?api-version=1.0',
-    "headers": { "User-Agent": "request" },
-    "rejectUnauthorized": false
-  };
-  // Return new promise 
-  return new Promise(function (resolve, reject) {
-    // Do async job
-    request.get(options, function (err, resp, body) {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(JSON.parse(body));
-      }
+    // Setting URL and headers for request
+    console.log("Fetching environment endpoints");
+    var options = {
+        "url": armEndpoint + 'metadata/endpoints?api-version=1.0',
+        "headers": { "User-Agent": "request" },
+        "rejectUnauthorized": false
+    };
+    // Return new promise 
+    return new Promise(function (resolve, reject) {
+        // Do async job
+        request.get(options, function (err, resp, body) {
+        if (err) {
+            reject(err);
+        } else {
+            resolve(JSON.parse(body));
+        }
+        });
     });
-  });
 }
 
 function setEnvironment(armEndpointMetadata) {
@@ -51,23 +68,23 @@ function setEnvironment(armEndpointMetadata) {
     map["portalUrl"] = armEndpointMetadata.portalEndpoint 
     map["resourceManagerEndpointUrl"] = armEndpoint 
     map["galleryEndpointUrl"] = armEndpointMetadata.galleryEndpoint 
-    map["activeDirectoryEndpointUrl"] = armEndpointMetadata.authentication.loginEndpoint.slice(0, armEndpointMetadata.authentication.loginEndpoint.lastIndexOf("/") + 1) 
+    map["activeDirectoryEndpointUrl"] = armEndpointMetadata.authentication.loginEndpoint.slice(0, armEndpointMetadata.authentication.loginEndpoint.lastIndexOf("/") + 1)
     map["activeDirectoryResourceId"] = armEndpointMetadata.authentication.audiences[0] 
     map["activeDirectoryGraphResourceId"] = armEndpointMetadata.graphEndpoint 
     map["storageEndpointSuffix"] = armEndpoint.substring(armEndpoint.indexOf('.'))  
     map["keyVaultDnsSuffix"] = ".vault" + armEndpoint.substring(armEndpoint.indexOf('.')) 
     map["managementEndpointUrl"] = armEndpointMetadata.authentication.audiences[0] 
-    map["validateAuthority"] = false
     Environment.Environment.add(map);
-
-    var isAdfs = armEndpointMetadata.authentication.loginEndpoint.endsWith('adfs')
-    if (isAdfs) {
-        tenantId = "adfs"
-    }
 
     var options = {};
     options["environment"] = Environment.Environment.AzureStack;
     options["tokenAudience"] = map["activeDirectoryResourceId"];
+
+    var isAdfs = armEndpointMetadata.authentication.loginEndpoint.endsWith('adfs')
+    if (isAdfs) {
+        domain = 'adfs'
+        options.environment.validateAuthority = false
+    }
 
     return new Promise((resolve, reject) => {
         resolve(options)
@@ -75,7 +92,7 @@ function setEnvironment(armEndpointMetadata) {
 }
 
 function loginWithSP(envOptions) {
-    return msRestNodeAuth.loginWithServicePrincipalSecret(clientId, clientSecret, tenantId, envOptions);
+    return msRestNodeAuth.loginWithServicePrincipalSecret(clientAppId, clientSecret, domain, envOptions);
 }
 
 function createResourceGroup(credentials) {
