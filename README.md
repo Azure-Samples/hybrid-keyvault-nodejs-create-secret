@@ -1,11 +1,8 @@
 ---
-page_type: sample
-languages:
-- csharp
-products:
-- dotnet
-description: "Add 150 character max description"
-urlFragment: "update-this-to-unique-url-stub"
+Topic: sample
+Languages: Node.js
+Products: azure-sdks
+Services: Azure Stack Hub
 ---
 
 # Official Microsoft Sample
@@ -18,36 +15,66 @@ Guidance on onboarding samples to docs.microsoft.com/samples: https://review.doc
 Taxonomies for products and languages: https://review.docs.microsoft.com/new-hope/information-architecture/metadata/taxonomies?branch=master
 -->
 
-Give a short description for your sample here. What does it do and why is it important?
+A sample code to create or update keyvault and create or update secret in a keyvault
 
 ## Contents
 
-Outline the file contents of the repository. It helps users navigate the codebase, build configuration and any related assets.
-
 | File/folder       | Description                                |
 |-------------------|--------------------------------------------|
-| `src`             | Sample source code.                        |
+| `index.js`        | Sample source code.                        |
 | `.gitignore`      | Define what to ignore at commit time.      |
-| `CHANGELOG.md`    | List of changes to the sample.             |
-| `CONTRIBUTING.md` | Guidelines for contributing to the sample. |
+| `package.json`    | Define dependencies.                       |
 | `README.md`       | This README file.                          |
 | `LICENSE`         | The license for the sample.                |
 
 ## Prerequisites
 
-Outline the required components and tools that a user might need to have on their machine in order to run the sample. This can be anything from frameworks, SDKs, OS versions or IDE releases.
+Refer to this azure stack doc for prerequisites (link)[https://docs.microsoft.com/en-us/azure-stack/user/azure-stack-version-profile-nodejs].
 
 ## Setup
 
-Explain how to prepare the sample once the user clones or downloads the repository. The section should outline every step necessary to install dependencies and set up any settings (for example, API keys and output folders).
+Set following environment variables:
+| Variable              | Description                                                 |
+|-----------------------|-------------------------------------------------------------|
+| `CLIENT_APP_ID`       | Service principal application id                            |
+| `CLIENT_OBJECT_ID`    | Service principal object id                                 |
+| `CLIENT_SECRET`       | Service principal application secret                        |
+| `TENANT_ID`           | Azure Stack Hub tenant ID                                   |
+| `SUBSCRIPTION_ID`     | Subscription id used to access offers in Azure Stack Hub    |
+| `ARM_ENDPOINT`        | Azure Stack Hub Resource Manager Endpoint                   |
+| `LOCATION`            | Resource location                                           |
+
+Service principal example:
+
+AAD
+```
+Secret                : System.Security.SecureString                                 # CLIENT_SECRET
+ServicePrincipalNames : {bd6bb75f-5fd6-4db9-91b7-4a6941e7feb9, http://azs-sptest01}
+ApplicationId         : bd6bb75f-5fd6-4db9-91b7-4a6941e7feb9                         # CLIENT_APP_ID
+DisplayName           : azs-sptest01
+Id                    : 36a22ee4-e2b0-411d-8f21-0ea8b4b5c46f                         # CLIENT_OBJECT_ID
+AdfsId                : 
+Type                  : ServicePrincipal
+```
+
+ADFS
+```
+ApplicationIdentifier : S-1-5-21-2937821301-3551617933-4294865508-76632              # CLIENT_OBJECT_ID
+ClientId              : 7591924e-0341-4812-8d23-52ef0aa27eff                         # CLIENT_APP_ID                   
+Thumbprint            : 
+ApplicationName       : Azurestack-azs-sptest01
+ClientSecret          : <Redacted>                                                   # CLIENT_SECRET
+PSComputerName        : <Redacted>
+RunspaceId            : e841cbbc-3d8e-45fd-b63f-42adbfbf664b
+```
 
 ## Running the sample
 
-Outline step-by-step instructions to execute the sample and see its output. Include steps for executing the sample from the IDE, starting specific services in the Azure portal or anything related to the overall launch of the code.
-
-## Key concepts
-
-Provide users with more context on the tools and services used in the sample. Explain some of the code that is being used and how services interact with each other.
+From root folder
+```
+npm install
+node .\index.js
+```
 
 ## Contributing
 
