@@ -3,8 +3,8 @@
 
 var Environment = require("@azure/ms-rest-azure-env");
 var msRestNodeAuth = require('@azure/ms-rest-nodeauth');
-var KeyVaultManagementClient = require("@azure/arm-keyvault-profile-2019-03-01-hybrid").KeyVaultManagementClient;
-var ResourceManagementClient = require('@azure/arm-resources-profile-hybrid-2019-03-01').ResourceManagementClient;
+var KeyVaultManagementClient = require("@azure/arm-keyvault-profile-2020-09-01-hybrid").KeyVaultManagementClient;
+var ResourceManagementClient = require('@azure/arm-resources-profile-2020-09-01-hybrid').ResourceManagementClient;
 
 var util = require('util');
 const request = require('request');
@@ -12,13 +12,13 @@ const requestPromise = util.promisify(request);
 
 // update these
 validateEnvironmentVariables();
-var clientAppId = process.env['CLIENT_APP_ID'];
-var clientObjectId = process.env['CLIENT_OBJECT_ID'];
-var clientSecret = process.env['CLIENT_SECRET'];
-var tenantId = process.env['TENANT_ID'];
-var subscriptionId = process.env['SUBSCRIPTION_ID'];
+var clientAppId = process.env['AZURE_CLIENT_ID'];
+var clientObjectId = process.env['AZURE_OBJECT_ID'];
+var clientSecret = process.env['AZURE_CLIENT_SECRET'];
+var tenantId = process.env['AZURE_TENANT_ID'];
+var subscriptionId = process.env['AZURE_SUBSCRIPTION_ID'];
 var armEndpoint = process.env['ARM_ENDPOINT'];
-var location = process.env['LOCATION'];
+var location = process.env['AZURE_LOCATION'];
 var domain = tenantId;
 var resourceGroup = "azs-sample-rg";
 var keyVaultName = "azs-sample-kv";
@@ -27,13 +27,13 @@ var secretValue = "azs-app-created-password";
 
 function validateEnvironmentVariables() {
     var envs = [];
-    if (!process.env['CLIENT_APP_ID']) envs.push('CLIENT_APP_ID');
-    if (!process.env['CLIENT_OBJECT_ID']) envs.push('CLIENT_OBJECT_ID');
-    if (!process.env['CLIENT_SECRET']) envs.push('CLIENT_SECRET');
-    if (!process.env['TENANT_ID']) envs.push('TENANT_ID');
-    if (!process.env['SUBSCRIPTION_ID']) envs.push('SUBSCRIPTION_ID');
+    if (!process.env['AZURE_CLIENT_ID']) envs.push('AZURE_CLIENT_ID');
+    if (!process.env['AZURE_OBJECT_ID']) envs.push('AZURE_OBJECT_ID');
+    if (!process.env['AZURE_CLIENT_SECRET']) envs.push('AZURE_CLIENT_SECRET');
+    if (!process.env['AZURE_TENANT_ID']) envs.push('AZURE_TENANT_ID');
+    if (!process.env['AZURE_SUBSCRIPTION_ID']) envs.push('AZURE_SUBSCRIPTION_ID');
     if (!process.env['ARM_ENDPOINT']) envs.push('ARM_ENDPOINT');
-    if (!process.env['LOCATION']) envs.push('LOCATION');
+    if (!process.env['AZURE_LOCATION']) envs.push('AZURE_LOCATION');
     if (envs.length > 0) {
         throw new Error(util.format('please set/export the following environment variables: %s', envs.toString()));
     }
