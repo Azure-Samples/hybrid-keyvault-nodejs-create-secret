@@ -16,14 +16,15 @@
   ],
   "author": "Microsoft Corporation",
   "contributors": [
-    "Kumar, Rakesh"
+    "Kumar, Rakesh",
+    "Shi, Wei"
   ],
   "license": "MIT",
   "dependencies": {
     "@azure/ms-rest-azure-env": "^2.0.0",
     "@azure/ms-rest-nodeauth": "^2.0.2",
-    "@azure/arm-keyvault-profile-2019-03-01-hybrid": "^1.0.0",
-    "@azure/arm-resources-profile-hybrid-2019-03-01": "^1.0.0"
+    "@azure/arm-keyvault-profile-2020-09-01-hybrid": "^1.0.0",
+    "@azure/arm-resources-profile-2020-09-01-hybrid": "^1.0.0"
   },
   "homepage": "https://github.com/Azure-Samples/hybrid-keyvault-nodejs-create-secret",
   "repository": {

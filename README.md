@@ -15,7 +15,7 @@ Guidance on onboarding samples to docs.microsoft.com/samples: https://review.doc
 Taxonomies for products and languages: https://review.docs.microsoft.com/new-hope/information-architecture/metadata/taxonomies?branch=master
 -->
 
-A sample code to create or update keyvault and create or update secret in a keyvault
+A sample code to create or update keyvault and create or update secret in a keyvault.
 
 ## Contents
 
@@ -31,39 +31,65 @@ A sample code to create or update keyvault and create or update secret in a keyv
 
 Refer to this azure stack doc for prerequisites (link)[https://docs.microsoft.com/en-us/azure-stack/user/azure-stack-version-profile-nodejs].
 
+### Certificate
+
+The first option is to use custom local certificate for NodeJS on Windows 10:
+
+1. Get your AzureStack certificate object using the name of the certificate (Powershell Core script).
+    ```powershells
+    $mycert = Get-ChildItem Cert:\CurrentUser\Root | Where-Object Subject -eq "CN=MyAzureCertName"
+    ```
+1. Export the certificate as a .cer file.
+    ```powershells
+    Export-Certificate -Type CERT -FilePath mycert.cer -Cert $mycert
+    ```
+1. Convert .cer file to .pem file (you can use openssl tool that is installed with Git bash and is located in `C:\Program Files\Git\usr\bin`).
+    ```powershells
+    openssl x509 -inform der -in mycert.cer -out mypem.pem
+    ```
+1. Set `NODE_EXTRA_CA_CERTS` environment variable.
+    ```powershells
+    NODE_EXTRA_CA_CERTS=<PATH TO mypem.pem file>
+    ```
+
+The second option is to disable TLS validation without setting `NODE_EXTRA_CA_CERTS` to the local NodeJS .pem file.
+```javascript
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+```
+
 ## Setup
 
 Set following environment variables:
 | Variable              | Description                                                 |
 |-----------------------|-------------------------------------------------------------|
-| `CLIENT_APP_ID`       | Service principal application id                            |
-| `CLIENT_OBJECT_ID`    | Service principal object id                                 |
-| `CLIENT_SECRET`       | Service principal application secret                        |
-| `TENANT_ID`           | Azure Stack Hub tenant ID                                   |
-| `SUBSCRIPTION_ID`     | Subscription id used to access offers in Azure Stack Hub    |
-| `ARM_ENDPOINT`        | Azure Stack Hub Resource Manager Endpoint                   |
-| `LOCATION`            | Resource location                                           |
+| `AZURE_SP_APP_ID`       | Service principal application id                            |
+| `AZURE_SP_APP_OBJECT_ID`    | Service principal object id                                 |
+| `AZURE_SP_APP_SECRET`       | Service principal application secret                        |
+| `AZURE_TENANT_ID`           | Azure Stack Hub tenant ID                                   |
+| `AZURE_SUBSCRIPTION_ID`     | Subscription id used to access offers in Azure Stack Hub    |
+| `AZURE_ARM_ENDPOINT`        | Azure Stack Hub Resource Manager Endpoint                   |
+| `AZURE_LOCATION`            | Resource location                                           |
 
 Service principal example:
 
 AAD
 ```
-Secret                : System.Security.SecureString                                 # CLIENT_SECRET
+Secret                : System.Security.SecureString                                 # AZURE_SP_APP_SECRET
 ServicePrincipalNames : {bd6bb75f-5fd6-4db9-91b7-4a6941e7feb9, http://azs-sptest01}
-ApplicationId         : bd6bb75f-5fd6-4db9-91b7-4a6941e7feb9                         # CLIENT_APP_ID
+ApplicationId         : bd6bb75f-5fd6-4db9-91b7-4a6941e7feb9                         # AZURE_SP_APP_ID
 DisplayName           : azs-sptest01
-Id                    : 36a22ee4-e2b0-411d-8f21-0ea8b4b5c46f                         # CLIENT_OBJECT_ID
+Id                    : 36a22ee4-e2b0-411d-8f21-0ea8b4b5c46f                         # AZURE_SP_APP_OBJECT_ID
 AdfsId                : 
 Type                  : ServicePrincipal
 ```
 
 ADFS
 ```
-ApplicationIdentifier : S-1-5-21-2937821301-3551617933-4294865508-76632              # CLIENT_OBJECT_ID
-ClientId              : 7591924e-0341-4812-8d23-52ef0aa27eff                         # CLIENT_APP_ID                   
+ApplicationIdentifier : S-1-5-21-2937821301-3551617933-4294865508-76632              # AZURE_SP_APP_OBJECT_ID
+ClientId              : 7591924e-0341-4812-8d23-52ef0aa27eff                         # AZURE_SP_APP_ID                   
 Thumbprint            : 
 ApplicationName       : Azurestack-azs-sptest01
-ClientSecret          : <Redacted>                                                   # CLIENT_SECRET
+ClientSecret          : <Redacted>                                                   # AZURE_SP_APP_SECRET
 PSComputerName        : <Redacted>
 RunspaceId            : e841cbbc-3d8e-45fd-b63f-42adbfbf664b
 ```
