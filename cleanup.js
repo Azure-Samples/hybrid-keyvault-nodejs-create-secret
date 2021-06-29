@@ -3,20 +3,20 @@
  * Licensed under the MIT License. See License.txt in the project root for
  * license information.
  */
-'use strict';
+"use strict";
 
 var Environment = require("@azure/ms-rest-azure-env");
-var util = require('util');
-var msRestAzure = require('@azure/ms-rest-nodeauth');
-var ResourceManagementClient = require('@azure/arm-resources-profile-2020-09-01-hybrid').ResourceManagementClient;
+var util = require("util");
+var msRestAzure = require("@azure/ms-rest-nodeauth");
+var ResourceManagementClient = require("@azure/arm-resources-profile-2020-09-01-hybrid").ResourceManagementClient;
 var KeyVaultManagementClient = require("@azure/arm-keyvault-profile-2020-09-01-hybrid").KeyVaultManagementClient;
-const request = require('request');
+const request = require("request");
 
-const clientIdEnvName = 'AZURE_SP_APP_ID';
-const tenantIdEnvName = 'AZURE_TENANT_ID';
-const secretEnvName = 'AZURE_SP_APP_SECRET';
-const subscriptionIdEnvName = 'AZURE_SUBSCRIPTION_ID';
-const armEndpointEnvName = 'AZURE_ARM_ENDPOINT';
+const clientIdEnvName = "AZURE_SP_APP_ID";
+const tenantIdEnvName = "AZURE_TENANT_ID";
+const secretEnvName = "AZURE_SP_APP_SECRET";
+const subscriptionIdEnvName = "AZURE_SUBSCRIPTION_ID";
+const armEndpointEnvName = "AZURE_ARM_ENDPOINT";
 
 _validateEnvironmentVariables();
 _validateParameters();
@@ -32,16 +32,16 @@ var resourceClient;
 var keyVaultClient;
 var map = {};
 
-const fetchUrl = armEndpoint + 'metadata/endpoints?api-version=1.0'
+const fetchUrl = armEndpoint + "metadata/endpoints?api-version=2019-10-01";
 
 function deleteResourceGroup(callback) {
-  console.log('\nStarting to delete resource group: ' + resourceGroupName);
+  console.log("\nStarting to delete resource group: " + resourceGroupName);
   return resourceClient.resourceGroups.deleteMethod(resourceGroupName, callback);
 }
 
 function deleteKeyVault(callback) {
-  console.log('\nStarting to delete key vault: ' + vaultName);
-  return keyVaultClient.vaults.deleteMethod(resourceGroupName, vaultName, callback)
+  console.log("\nStarting to delete key vault: " + vaultName);
+  return keyVaultClient.vaults.deleteMethod(resourceGroupName, vaultName, callback);
 }
 
 function _validateEnvironmentVariables() {
@@ -51,13 +51,13 @@ function _validateEnvironmentVariables() {
   if (!process.env[secretEnvName]) envs.push(secretEnvName);
   if (!process.env[subscriptionIdEnvName]) envs.push(subscriptionIdEnvName);
   if (envs.length > 0) {
-    throw new Error(util.format('please set/export the following environment variables: %s', envs.toString()));
+    throw new Error(util.format("please set/export the following environment variables: %s", envs.toString()));
   }
 }
 
 function _validateParameters() {
   if (!process.argv[2] || !process.argv[3]) {
-    throw new Error('Please provide the resource group and the resource name by executing the script as follows: "node cleanup.js <resourceGroupName> <vaultName>".');
+    throw new Error("Please provide the resource group and the resource name by executing the script as follows: \"node cleanup.js <resourceGroupName> <vaultName>\".");
   }
 }
 
@@ -66,7 +66,7 @@ function fetchEndpointMetadata() {
   var options = {
     url: fetchUrl,
     headers: {
-      'User-Agent': 'request'
+      "User-Agent": "request"
     },
     rejectUnauthorized: false
   };
@@ -79,37 +79,35 @@ function fetchEndpointMetadata() {
       } else {
         resolve(JSON.parse(body));
       }
-    })
-  })
+    });
+  });
 }
 
 function main() {
   var endpointData = fetchEndpointMetadata();
   endpointData.then(function (result) {
-    var metadata = result;
+    var metadata = result[0];
     console.log("Initialized user details");
-    // Use user details from here
-    console.log(metadata)
-    map["name"] = "AzureStack"
-    map["portalUrl"] = metadata.portalEndpoint 
-    map["resourceManagerEndpointUrl"] = armEndpoint 
-    map["galleryEndpointUrl"] = metadata.galleryEndpoint 
-    map["activeDirectoryEndpointUrl"] = metadata.authentication.loginEndpoint.slice(0, metadata.authentication.loginEndpoint.lastIndexOf("/") + 1) 
-    map["activeDirectoryResourceId"] = metadata.authentication.audiences[0] 
-    map["activeDirectoryGraphResourceId"] = metadata.graphEndpoint 
-    map["storageEndpointSuffix"] = "." + armEndpoint.substring(armEndpoint.indexOf('.'))  
-    map["keyVaultDnsSuffix"] = ".vault" + armEndpoint.substring(armEndpoint.indexOf('.')) 
-    map["managementEndpointUrl"] = metadata.authentication.audiences[0] 
-    var isAdfs = metadata.authentication.loginEndpoint.endsWith('adfs') || metadata.authentication.loginEndpoint.endsWith('adfs/')
+    console.log(metadata);
+    map["name"] = "AzureStack";
+    map["portalUrl"] = metadata.portal;
+    map["resourceManagerEndpointUrl"] = armEndpoint;
+    map["galleryEndpointUrl"] = metadata.gallery;
+    map["activeDirectoryEndpointUrl"] = metadata.authentication.loginEndpoint.slice(0, metadata.authentication.loginEndpoint.lastIndexOf("/") + 1);
+    map["activeDirectoryResourceId"] = metadata.authentication.audiences[0];
+    map["activeDirectoryGraphResourceId"] = metadata.graph;
+    map["storageEndpointSuffix"] = metadata.suffixes.storage;
+    map["keyVaultDnsSuffix"] = metadata.suffixes.keyVaultDns;
+    map["managementEndpointUrl"] = metadata.authentication.audiences[0];
     Environment.Environment.add(map);
 
     var options = {};
     options["environment"] = Environment.Environment.AzureStack;
-
+    var isAdfs = metadata.authentication.loginEndpoint.endsWith("adfs") || metadata.authentication.loginEndpoint.endsWith("adfs/");
     if(isAdfs) {
-        tenantId = "adfs"
-        options.environment.validateAuthority = false
-        map["validateAuthority"] = false
+        tenantId = "adfs";
+        options.environment.validateAuthority = false;
+        map["validateAuthority"] = false;
     }
     msRestAzure.loginWithServicePrincipalSecret(clientId, secret, tenantId, options, function (err, credentials) {
       if (err) return console.log(err);
@@ -118,20 +116,20 @@ function main() {
       keyVaultClient = new KeyVaultManagementClient(credentials, subscriptionId);
       deleteKeyVault(function (err, result) {
         if (err) {
-          return console.log('Error occured in deleting the key vault: ' + vaultName + '\n' + util.inspect(err, { depth: null }));
+          return console.log("Error occured in deleting the key vault: " + vaultName + "\n" + util.inspect(err, { depth: null }));
         }
-        console.log('Deleting key vault: ' + vaultName);
+        console.log("Deleting key vault: " + vaultName);
         deleteResourceGroup(function (err, result) {
           if (err) {
-            return console.log('Error occured in deleting the resource group: ' + resourceGroupName + '\n' + util.inspect(err, { depth: null }));
+            return console.log("Error occured in deleting the resource group: " + resourceGroupName + "\n" + util.inspect(err, { depth: null }));
           }
-          console.log('Deleting resource group: ' + resourceGroupName);
+          console.log("Deleting resource group: " + resourceGroupName);
         });
       });
     });
   }, function (err) {
     console.log(err);
-  })
+  });
 }
 
 main();
