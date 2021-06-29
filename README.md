@@ -29,7 +29,7 @@ A sample code to create or update keyvault and create or update secret in a keyv
 
 ## Prerequisites
 
-Refer to this azure stack doc for prerequisites (link)[https://docs.microsoft.com/en-us/azure-stack/user/azure-stack-version-profile-nodejs].
+Refer to this azure stack doc for more information: https://docs.microsoft.com/en-us/azure-stack/user/azure-stack-version-profile-nodejs.
 
 ### Certificate
 

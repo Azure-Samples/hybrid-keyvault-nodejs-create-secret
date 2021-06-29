@@ -13,7 +13,7 @@ const spAppIdEnvName = "AZURE_SP_APP_ID";
 const spObjectIdEnvName = "AZURE_SP_APP_OBJECT_ID";
 const spSecretEnvName = "AZURE_SP_APP_SECRET";
 const tenantIdEnvName = "AZURE_TENANT_ID";
-const subscriptionIdEnvName = "AZURE_SUBSCRIPTION_ID"
+const subscriptionIdEnvName = "AZURE_SUBSCRIPTION_ID";
 const armEndpointEnvName = "AZURE_ARM_ENDPOINT";
 const locationEnvName = "AZURE_LOCATION";
 
@@ -26,11 +26,12 @@ var tenantId = process.env[tenantIdEnvName];
 var subscriptionId = process.env[subscriptionIdEnvName];
 var armEndpoint = process.env[armEndpointEnvName];
 var location = process.env[locationEnvName];
-var domain = tenantId;
 var resourceGroupName = "azure-sample-rg";
 var keyVaultName = "azure-sample-kv";
 var secretName = "azure-app-created-secret";
 var secretValue = "azure-app-created-password";
+
+const fetchUrl = armEndpoint + "metadata/endpoints?api-version=2019-10-01";
 
 function validateEnvironmentVariables() {
     var envs = [];
@@ -42,7 +43,7 @@ function validateEnvironmentVariables() {
     if (!process.env[armEndpointEnvName]) envs.push(armEndpointEnvName);
     if (!process.env[locationEnvName]) envs.push(locationEnvName);
     if (envs.length > 0) {
-        throw new Error(util.format('please set/export the following environment variables: %s', envs.toString()));
+        throw new Error(util.format("please set/export the following environment variables: %s", envs.toString()));
     }
 }
 
@@ -50,7 +51,7 @@ function fetchEndpointMetadata() {
     // Setting URL and headers for request
     console.log("Fetching environment endpoints");
     var options = {
-        "url": armEndpoint + 'metadata/endpoints?api-version=1.0',
+        "url": fetchUrl,
         "headers": { "User-Agent": "request" },
         "rejectUnauthorized": false
     };
@@ -66,39 +67,40 @@ function fetchEndpointMetadata() {
     });
 }
 
-function setEnvironment(armEndpointMetadata) {
-    console.log(armEndpointMetadata)
-    console.log("Setting environment")
+function setEnvironment(metadata) {
+    metadata = metadata[0];
+    console.log(metadata);
+    console.log("Setting environment");
     map = {};
-    map["name"] = "AzureStack"
-    map["portalUrl"] = armEndpointMetadata.portalEndpoint 
-    map["resourceManagerEndpointUrl"] = armEndpoint 
-    map["galleryEndpointUrl"] = armEndpointMetadata.galleryEndpoint 
-    map["activeDirectoryEndpointUrl"] = armEndpointMetadata.authentication.loginEndpoint.slice(0, armEndpointMetadata.authentication.loginEndpoint.lastIndexOf("/") + 1)
-    map["activeDirectoryResourceId"] = armEndpointMetadata.authentication.audiences[0] 
-    map["activeDirectoryGraphResourceId"] = armEndpointMetadata.graphEndpoint 
-    map["storageEndpointSuffix"] = armEndpoint.substring(armEndpoint.indexOf('.'))  
-    map["keyVaultDnsSuffix"] = ".vault" + armEndpoint.substring(armEndpoint.indexOf('.')) 
-    map["managementEndpointUrl"] = armEndpointMetadata.authentication.audiences[0] 
+    map["name"] = "AzureStack";
+    map["portalUrl"] = metadata.portal;
+    map["resourceManagerEndpointUrl"] = armEndpoint;
+    map["galleryEndpointUrl"] = metadata.gallery;
+    map["activeDirectoryEndpointUrl"] = metadata.authentication.loginEndpoint.slice(0, metadata.authentication.loginEndpoint.lastIndexOf("/") + 1);
+    map["activeDirectoryResourceId"] = metadata.authentication.audiences[0];
+    map["activeDirectoryGraphResourceId"] = metadata.graph;
+    map["storageEndpointSuffix"] = metadata.suffixes.storage;
+    map["keyVaultDnsSuffix"] = metadata.suffixes.keyVaultDns;
+    map["managementEndpointUrl"] = metadata.authentication.audiences[0];
     Environment.Environment.add(map);
 
     var options = {};
     options["environment"] = Environment.Environment.AzureStack;
     options["tokenAudience"] = map["activeDirectoryResourceId"];
-
-    var isAdfs = armEndpointMetadata.authentication.loginEndpoint.endsWith('adfs') || armEndpointMetadata.authentication.loginEndpoint.endsWith('adfs/')
+    var isAdfs = metadata.authentication.loginEndpoint.endsWith("adfs") || metadata.authentication.loginEndpoint.endsWith("adfs/");
     if (isAdfs) {
-        domain = 'adfs'
-        options.environment.validateAuthority = false
+        tenantId = "adfs";
+        options.environment.validateAuthority = false;
+        map["validateAuthority"] = false;
     }
 
     return new Promise((resolve, reject) => {
-        resolve(options)
+        resolve(options);
     });
 }
 
 function loginWithSP(envOptions) {
-    return msRestNodeAuth.loginWithServicePrincipalSecret(clientAppId, clientSecret, domain, envOptions);
+    return msRestNodeAuth.loginWithServicePrincipalSecret(clientAppId, clientSecret, tenantId, envOptions);
 }
 
 function createResourceGroup(credentials) {
@@ -152,7 +154,7 @@ function updateSecret(credentials) {
             console.log("Secret set successfully");
             console.log(result);
         }
-        console.log(util.format('Please execute the following script for cleanup:\nnode cleanup.js %s %s', resourceGroupName, keyVaultName));
+        console.log(util.format("Please execute the following script for cleanup:\nnode cleanup.js %s %s", resourceGroupName, keyVaultName));
     });
 }
 
@@ -168,5 +170,5 @@ fetchEndpointMetadata()
     .then((result) => {
         console.log(result);
         updateSecret(credentials);
-    })
-})
+    });
+});
