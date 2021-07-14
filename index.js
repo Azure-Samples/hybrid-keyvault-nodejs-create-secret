@@ -26,6 +26,7 @@ var tenantId = process.env[tenantIdEnvName];
 var subscriptionId = process.env[subscriptionIdEnvName];
 var armEndpoint = process.env[armEndpointEnvName];
 var location = process.env[locationEnvName];
+var tenantIdForLogin = tenantId
 var resourceGroupName = "azure-sample-rg";
 var keyVaultName = "azure-sample-kv";
 var secretName = "azure-app-created-secret";
@@ -89,7 +90,7 @@ function setEnvironment(metadata) {
     options["tokenAudience"] = map["activeDirectoryResourceId"];
     var isAdfs = metadata.authentication.loginEndpoint.endsWith("adfs") || metadata.authentication.loginEndpoint.endsWith("adfs/");
     if (isAdfs) {
-        tenantId = "adfs";
+        tenantIdForLogin = "adfs";
         options.environment.validateAuthority = false;
         map["validateAuthority"] = false;
     }
@@ -100,7 +101,7 @@ function setEnvironment(metadata) {
 }
 
 function loginWithSP(envOptions) {
-    return msRestNodeAuth.loginWithServicePrincipalSecret(clientAppId, clientSecret, tenantId, envOptions);
+    return msRestNodeAuth.loginWithServicePrincipalSecret(clientAppId, clientSecret, tenantIdForLogin, envOptions);
 }
 
 function createResourceGroup(credentials) {
